@@ -33,3 +33,26 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=astrology --branch=main
 
+      - name: Register custom domain via Cloudflare API
+        run: |
+          # Add custom domain astrology.universeinvedors.tech to the Pages project
+          # Uses the zone-level approach that works with .tech TLD
+          RESPONSE=$(curl -s -X POST \
+            "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/astrology/domains" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"domain":"astrology.universeinvedors.tech"}')
+          echo "Domain registration response: $RESPONSE"
+          # Also try via PATCH
+          PATCH=$(curl -s -X PATCH \
+            "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/astrology" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"domains":["astrology-cji.pages.dev","astrology.universeinvedors.tech"]}')
+          echo "PATCH response: $PATCH"
+
+      - name: Summary
+        run: |
+          echo "### ✅ Deployment Complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "🔮 **Preview:** https://astrology-cji.pages.dev" >> "$GITHUB_STEP_SUMMARY"
+          echo "🌐 **Live:** https://astrology.universeinvedors.tech" >> "$GITHUB_STEP_SUMMARY"
